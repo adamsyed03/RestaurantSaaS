@@ -1,0 +1,9 @@
+name = "tango-pub"
+compatibility_date = "2023-12-01"
+
+[site]
+bucket = "./public"
+
+[[kv_namespaces]]
+binding = "CARTS"
+id = "your-kv-namespace-id" # You'll get this from Cloudflare dashboard 
