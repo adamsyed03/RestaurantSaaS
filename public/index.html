@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tango Pub - Meni</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="table-selection" class="overlay">
+        <div class="table-selection-content">
+            <div class="logo-container">
+                <img src="/images/tango-logo.png" alt="Tango Pub Logo" class="restaurant-logo">
+            </div>
+            <h2>Dobrodošli u Tango Pub</h2>
+            <p>Unesite broj vašeg stola da biste nastavili</p>
+            <div class="table-input-container">
+                <input type="number" id="table-number-input" placeholder="Broj stola" min="1">
+                <button id="start-order-btn" class="btn btn-primary">Započni porudžbinu</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container hidden" id="main-container">
+        <header>
+            <div class="header-content">
+                <img src="/images/tango-logo.png" alt="Tango Pub Logo" class="restaurant-logo">
+                <div>
+                    <h1 id="restaurant-name">Učitavanje...</h1>
+                    <p id="restaurant-tagline"></p>
+                </div>
+            </div>
+            <div class="table-info">
+                Sto #<span id="current-table">--</span>
+            </div>
+        </header>
+        
+        <div id="menu-container">
+            <div class="menu-header">
+                <h2>Meni</h2>
+                <button id="view-cart-btn" class="cart-btn">
+                    Korpa (<span id="cart-count">0</span>)
+                </button>
+            </div>
+            
+            <div class="category-tabs" id="category-tabs">
+                <!-- Category tabs will be added here dynamically -->
+            </div>
+            
+            <div id="menu-content"></div>
+        </div>
+        
+        <div id="cart-container" class="cart-overlay hidden">
+            <div class="cart-panel">
+                <div class="cart-header">
+                    <h2>Vaša porudžbina</h2>
+                    <button id="close-cart-btn">&times;</button>
+                </div>
+                <div id="cart-items"></div>
+                <div id="cart-total">Ukupno: 0 дин.</div>
+                <button id="checkout-btn" class="btn">Poruči</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 

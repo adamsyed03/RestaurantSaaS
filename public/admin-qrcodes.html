@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu QR Codes</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .qr-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .qr-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .qr-image {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #eee;
+            background: white;
+        }
+        .instructions {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+        .download-btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .url-display {
+            padding: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 10px 0;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Restaurant Menu QR Codes</h1>
+        
+        <div class="qr-section">
+            <h2>Table QR Code</h2>
+            <p>Print this QR code and place it on your restaurant tables for customers to scan.</p>
+            
+            <div class="qr-container">
+                <!-- Replace YOUR_ACTUAL_DOMAIN with your actual domain -->
+                <div class="qr-image">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=http://localhost:3000" 
+                         alt="Menu QR Code" id="qr-code-image">
+                </div>
+                
+                <div class="url-display" id="menu-url">http://localhost:3000</div>
+                
+                <a href="#" class="download-btn" id="download-qr">Download QR Code</a>
+            </div>
+            
+            <div class="instructions">
+                <h3>Instructions:</h3>
+                <ol>
+                    <li>Before printing, replace "localhost:3000" with your actual domain in the URL field above</li>
+                    <li>Click "Update QR Code" to generate a new QR code with your domain</li>
+                    <li>Click "Download QR Code" to save the image</li>
+                    <li>Print the QR code and place it on your restaurant tables</li>
+                </ol>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <label for="url-input">Update URL:</label>
+                <input type="text" id="url-input" value="http://localhost:3000" style="width: 300px; padding: 8px;">
+                <button id="update-qr" style="padding: 8px 15px;">Update QR Code</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const qrImage = document.getElementById('qr-code-image');
+            const menuUrl = document.getElementById('menu-url');
+            const urlInput = document.getElementById('url-input');
+            const updateQrBtn = document.getElementById('update-qr');
+            const downloadQrBtn = document.getElementById('download-qr');
+            
+            // Update QR code when button is clicked
+            updateQrBtn.addEventListener('click', function() {
+                const newUrl = urlInput.value.trim();
+                if (newUrl) {
+                    qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(newUrl)}`;
+                    menuUrl.textContent = newUrl;
+                }
+            });
+            
+            // Download QR code
+            downloadQrBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Create a temporary link
+                const link = document.createElement('a');
+                link.href = qrImage.src;
+                link.download = 'restaurant-menu-qr.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+        });
+    </script>
+</body>
+</html> 
