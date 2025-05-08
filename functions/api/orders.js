@@ -1,24 +1,29 @@
 export async function onRequest(context) {
     // Simple POST handler
     if (context.request.method === 'POST') {
-        const order = await context.request.json();
-        const key = 'order_' + new Date().getTime();
-        
         try {
-            // Direct KV operation
+            const order = await context.request.json();
+            const key = 'order_' + Date.now();
+            
+            // Add headers to ensure proper JSON response
+            const headers = {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            };
+
+            // Save to KV
             await context.env.CARTS.put(key, JSON.stringify(order));
-            return new Response(JSON.stringify({ ok: true }), {
-                headers: { 'Content-Type': 'application/json' }
-            });
-        } catch (e) {
-            // If this fails, we know it's a KV binding issue
-            return new Response(JSON.stringify({ 
-                error: 'KV Error', 
-                details: e.message 
-            }), { 
-                status: 500,
-                headers: { 'Content-Type': 'application/json' }
-            });
+            
+            return new Response(JSON.stringify({ success: true }), { headers });
+            
+        } catch (error) {
+            return new Response(
+                JSON.stringify({ error: 'Failed to process order' }), 
+                { 
+                    status: 400,
+                    headers: { 'Content-Type': 'application/json' }
+                }
+            );
         }
     }
 

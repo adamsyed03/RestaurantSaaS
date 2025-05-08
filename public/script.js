@@ -476,43 +476,47 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.payment-btn').forEach(button => {
             button.onclick = async function() {
                 try {
-                    const paymentType = this.dataset.payment;
-                    const notes = document.getElementById('customer-notes').value;
-                    
                     const orderData = {
                         table: tableId,
-                        items: cart,
+                        items: cart.map(item => ({
+                            name: item.name,
+                            quantity: item.quantity,
+                            price: item.price
+                        })),
                         total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-                        payment: paymentType,
-                        notes: notes,
-                        time: new Date().toISOString()
+                        payment: this.dataset.payment,
+                        notes: document.getElementById('customer-notes').value,
+                        timestamp: new Date().toISOString()
                     };
 
                     const response = await fetch('/api/orders', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
                         body: JSON.stringify(orderData)
                     });
 
-                    if (response.ok) {
-                        cart = [];
-                        updateCartDisplay();
-                        
-                        checkoutContent.innerHTML = `
-                            <div class="checkout-header">
-                                <h2>Porudžbina potvrđena</h2>
-                                <button id="close-confirmation">&times;</button>
-                            </div>
-                            <div class="confirmation-message">
-                                <div class="success-icon">✓</div>
-                                <h3>Hvala na porudžbini!</h3>
-                                <p>Vaša porudžbina je uspešno primljena.</p>
-                            </div>
-                        `;
-                    } else {
-                        throw new Error('Failed to submit order');
-                    }
+                    if (!response.ok) throw new Error('Network response was not ok');
+
+                    // Clear cart and show success
+                    cart = [];
+                    updateCartDisplay();
+                    
+                    checkoutContent.innerHTML = `
+                        <div class="checkout-header">
+                            <h2>Porudžbina potvrđena</h2>
+                            <button id="close-confirmation">&times;</button>
+                        </div>
+                        <div class="confirmation-message">
+                            <div class="success-icon">✓</div>
+                            <h3>Hvala na porudžbini!</h3>
+                            <p>Vaša porudžbina je uspešno primljena.</p>
+                        </div>
+                    `;
+
                 } catch (error) {
+                    console.error('Error:', error);
                     alert('Došlo je do greške. Molimo pokušajte ponovo.');
                 }
             };
