@@ -123,7 +123,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function displayMenu(data) {
-        console.log('Displaying menu');
         const menuContent = document.getElementById('menu-content');
         menuContent.innerHTML = '';
         
@@ -136,6 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="menu-items">
                     ${category.items.map(item => `
                         <div class="menu-item">
+                            <img src="${item.image}" alt="${item.name}" class="menu-item-image">
                             <div class="item-info">
                                 <h4>${item.name}</h4>
                                 <p>${item.description}</p>
@@ -151,14 +151,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
             menuContent.appendChild(categorySection);
-        });
-        
-        // Update quantities for items in cart
-        cart.forEach(item => {
-            const quantityElement = document.getElementById(`quantity-${item.id}`);
-            if (quantityElement) {
-                quantityElement.textContent = item.quantity;
-            }
         });
     }
     
@@ -364,7 +356,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tableSelection.innerHTML = `
             <div class="table-selection-content">
                 <div class="logo-container">
-                    <img src="/images/tango-logo.png" alt="Tango Pub Logo" class="restaurant-logo">
+                    <img src="/images/RestaurantLogoTango.jpg" alt="Tango Pub Logo" class="restaurant-logo">
                 </div>
                 <h2>Sto #${tableId.replace('table', '')}</h2>
                 <div class="service-choice-buttons">
@@ -392,6 +384,25 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
     
+    function showTableSelection() {
+        mainContainer.innerHTML = `
+            <div class="table-selection">
+                <img src="/images/RestaurantLogoTango.jpg" alt="Tango Pub Logo" class="restaurant-logo">
+                <h2>Sto #${tableId.replace('table', '')}</h2>
+                <div class="service-choice-buttons">
+                    <button id="call-waiter-btn" class="btn btn-secondary">
+                        <i class="fas fa-bell"></i>
+                        Pozovi konobara
+                    </button>
+                    <button id="order-online-btn" class="btn btn-primary">
+                        <i class="fas fa-utensils"></i>
+                        Naruči online
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
     function showCheckoutScreen() {
         const checkoutOverlay = document.createElement('div');
         checkoutOverlay.className = 'checkout-overlay';
@@ -417,13 +428,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // Simplified checkout content
         checkoutContent.innerHTML = `
             <div class="checkout-header">
+                <img src="/images/RestaurantLogoTango.jpg" alt="Tango Pub Logo" class="checkout-logo">
                 <h2>Vaša porudžbina</h2>
                 <button id="close-checkout">&times;</button>
             </div>
             
             <div class="restaurant-info">
                 <p><strong>Tango Pub</strong></p>
-                <p>Kralja Petra I 13, Kragujevac</p>
+                <p>Karađorđeva 28, Kragujevac</p>
                 <p>Sto #${tableId.replace('table', '')}</p>
             </div>
             
@@ -469,6 +481,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Show confirmation message
                 checkoutContent.innerHTML = `
                     <div class="checkout-header">
+                        <img src="/images/RestaurantLogoTango.jpg" alt="Tango Pub Logo" class="checkout-logo">
                         <h2>Porudžbina potvrđena</h2>
                         <button id="close-confirmation">&times;</button>
                     </div>
@@ -483,10 +496,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     <button id="finish-order-btn" class="btn btn-primary">U redu</button>
                 `;
                 
-                // Alert waiter (this could be connected to a proper notification system)
-                alert(`Nova porudžbina za sto #${tableId.replace('table', '')}\nNačin plaćanja: ${paymentType === 'cash' ? 'Gotovina' : 'Kartica'}`);
+                // Reset all quantity displays in the menu
+                document.querySelectorAll('[id^="quantity-"]').forEach(element => {
+                    element.textContent = '0';
+                });
                 
-                // Clear cart
+                // Clear the cart
                 cart = [];
                 updateCartDisplay();
                 

@@ -1,18 +1,16 @@
 export function onRequest(context) {
-  const restaurantConfig = {
+  return new Response(JSON.stringify({
     name: "Tango Pub",
-    tagline: "Restoran & Bar • Kragujevac",
-    primaryColor: "#1A1A1A",
-    secondaryColor: "#D4AF37",
+    tagline: "Tradicionalni ukusi u modernom ambijentu",
+    address: "Karađorđeva 28, Kragujevac",
     currency: {
       code: "RSD",
-      symbol: "дин."
+      symbol: "RSD"
     }
-  };
-  
-  return new Response(JSON.stringify(restaurantConfig), {
+  }), {
     headers: {
-      "content-type": "application/json"
+      "content-type": "application/json",
+      "Access-Control-Allow-Origin": "*"
     }
   });
 } 
