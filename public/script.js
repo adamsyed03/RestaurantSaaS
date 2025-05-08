@@ -1,7 +1,13 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Script loaded');
     
-    // Elements
+    // Initialize variables
+    let cart = [];
+    let tableId = null;
+    let currencySymbol = 'RSD';
+    let menuData = null;
+    
+    // Get DOM elements
     const tableSelection = document.getElementById('table-selection');
     const mainContainer = document.getElementById('main-container');
     const tableNumberInput = document.getElementById('table-number-input');
@@ -19,20 +25,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeCartBtn = document.getElementById('close-cart-btn');
     const checkoutBtn = document.getElementById('checkout-btn');
     
-    // Variables
-    let tableId = null;
-    let cart = [];
-    let currencySymbol = 'дин.';
-    let menuData = null;
+    // Initialize cart as a global variable
+    window.cart = [];
     
-    // Get table number from URL or localStorage
+    // Get table number from URL
     const urlParams = new URLSearchParams(window.location.search);
     tableId = urlParams.get('table') || localStorage.getItem('tableId');
     
     if (tableId) {
         currentTableDisplay.textContent = tableId.replace('table', '');
-        // Load cart for this table
-        loadCart();
     }
     
     // Event listeners for table selection
@@ -81,14 +82,14 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => console.error('Error loading menu:', error));
     
-    // Cart button functionality
-    viewCartBtn.onclick = function() {
-        cartContainer.classList.remove('hidden');
-    };
+    // Cart visibility toggle
+    viewCartBtn.addEventListener('click', function() {
+        cartContainer.classList.toggle('hidden');
+    });
     
-    closeCartBtn.onclick = function() {
+    closeCartBtn.addEventListener('click', function() {
         cartContainer.classList.add('hidden');
-    };
+    });
     
     checkoutBtn.onclick = function() {
         if (cart.length === 0) {
@@ -100,25 +101,6 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // Functions
-    function loadCart() {
-        if (!tableId) return;
-        
-        fetch(`/api/cart/${tableId}`)
-            .then(response => response.json())
-            .then(data => {
-                cart = data;
-                updateCartDisplay();
-                // Update quantity displays in menu
-                cart.forEach(item => {
-                    const quantityElement = document.getElementById(`quantity-${item.id}`);
-                    if (quantityElement) {
-                        quantityElement.textContent = item.quantity;
-                    }
-                });
-            })
-            .catch(error => console.error('Error loading cart:', error));
-    }
-    
     function createCategoryTabs(data) {
         console.log('Creating category tabs');
         const categoryTabs = document.getElementById('category-tabs');
@@ -129,26 +111,26 @@ document.addEventListener('DOMContentLoaded', function() {
             tab.className = 'category-tab' + (index === 0 ? ' active' : '');
             tab.textContent = category.name;
             tab.onclick = () => {
+                // Scroll to category section
+                document.getElementById(`category-${category.name}`).scrollIntoView({ behavior: 'smooth' });
+                
+                // Update active tab
                 document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
-                displayMenu(data, category.name);
             };
             categoryTabs.appendChild(tab);
         });
     }
     
-    function displayMenu(data, selectedCategory = null) {
-        console.log('Displaying menu', selectedCategory);
+    function displayMenu(data) {
+        console.log('Displaying menu');
         const menuContent = document.getElementById('menu-content');
         menuContent.innerHTML = '';
         
-        const categories = selectedCategory 
-            ? [data.categories.find(c => c.name === selectedCategory)]
-            : data.categories;
-            
-        categories.forEach(category => {
+        data.categories.forEach(category => {
             const categorySection = document.createElement('div');
             categorySection.className = 'menu-category';
+            categorySection.id = `category-${category.name}`;
             categorySection.innerHTML = `
                 <h3>${category.name}</h3>
                 <div class="menu-items">
@@ -157,12 +139,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="item-info">
                                 <h4>${item.name}</h4>
                                 <p>${item.description}</p>
-                                <div class="price">${formatPrice(item.price)}</div>
+                                <div class="price">${item.price.toLocaleString()} RSD</div>
                             </div>
                             <div class="item-quantity">
-                                <button onclick="updateCartItem('${item.id}', -1)">-</button>
+                                <button onclick="decrementQuantity('${item.id}', '${item.name}', ${item.price})">-</button>
                                 <span id="quantity-${item.id}">0</span>
-                                <button onclick="updateCartItem('${item.id}', 1, '${item.name}', ${item.price})">+</button>
+                                <button onclick="incrementQuantity('${item.id}', '${item.name}', ${item.price})">+</button>
                             </div>
                         </div>
                     `).join('')}
@@ -171,7 +153,7 @@ document.addEventListener('DOMContentLoaded', function() {
             menuContent.appendChild(categorySection);
         });
         
-        // Update quantity displays for items in cart
+        // Update quantities for items in cart
         cart.forEach(item => {
             const quantityElement = document.getElementById(`quantity-${item.id}`);
             if (quantityElement) {
@@ -227,7 +209,7 @@ document.addEventListener('DOMContentLoaded', function() {
         decreaseBtn.className = 'quantity-btn';
         decreaseBtn.textContent = '-';
         decreaseBtn.onclick = function() {
-            updateItemQuantity(item.id, -1);
+            decrementQuantity(item.id, item.name, item.price);
             animateButton(decreaseBtn);
         };
         
@@ -239,7 +221,7 @@ document.addEventListener('DOMContentLoaded', function() {
         increaseBtn.className = 'quantity-btn';
         increaseBtn.textContent = '+';
         increaseBtn.onclick = function() {
-            updateItemQuantity(item.id, 1);
+            incrementQuantity(item.id, item.name, item.price);
             animateButton(increaseBtn);
         };
         
@@ -295,7 +277,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function formatPrice(price) {
-        return price.toLocaleString() + ' ' + (currencySymbol || 'RSD');
+        return price.toLocaleString() + ' ' + currencySymbol;
     }
     
     function getItemQuantity(itemId) {
@@ -303,42 +285,42 @@ document.addEventListener('DOMContentLoaded', function() {
         return cartItem ? cartItem.quantity : 0;
     }
     
-    function updateItemQuantity(itemId, change) {
-        if (!tableId) {
-            alert('Molimo izaberite sto prvo');
-            return;
+    // Global functions for quantity buttons
+    window.incrementQuantity = function(itemId, name, price) {
+        console.log('Increment:', itemId);
+        const quantityElement = document.getElementById(`quantity-${itemId}`);
+        let currentQty = parseInt(quantityElement.textContent);
+        currentQty++;
+        quantityElement.textContent = currentQty;
+        
+        updateCart(itemId, name, price, currentQty);
+    };
+    
+    window.decrementQuantity = function(itemId, name, price) {
+        console.log('Decrement:', itemId);
+        const quantityElement = document.getElementById(`quantity-${itemId}`);
+        let currentQty = parseInt(quantityElement.textContent);
+        if (currentQty > 0) {
+            currentQty--;
+            quantityElement.textContent = currentQty;
+            updateCart(itemId, name, price, currentQty);
+        }
+    };
+    
+    function updateCart(itemId, name, price, quantity) {
+        const existingItem = cart.find(item => item.id === itemId);
+        
+        if (existingItem) {
+            if (quantity === 0) {
+                cart = cart.filter(item => item.id !== itemId);
+            } else {
+                existingItem.quantity = quantity;
+            }
+        } else if (quantity > 0) {
+            cart.push({ id: itemId, name, price, quantity });
         }
         
-        fetch(`/api/cart/${tableId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                itemId: itemId,
-                quantity: change
-            })
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to update cart');
-            }
-            return response.json();
-        })
-        .then(data => {
-            cart = data;
-            updateCartDisplay();
-            
-            // Update quantity in menu
-            const quantityElement = document.querySelector(`.menu-item[data-id="${itemId}"] .item-quantity`);
-            if (quantityElement) {
-                quantityElement.textContent = getItemQuantity(itemId);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Greška pri ažuriranju korpe. Pokušajte ponovo.');
-        });
+        updateCartDisplay();
     }
     
     function updateCartDisplay() {
@@ -353,12 +335,12 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="cart-item">
                 <div class="item-info">
                     <h4>${item.name}</h4>
-                    <div class="price">${formatPrice(item.price * item.quantity)}</div>
+                    <div class="price">${(item.price * item.quantity).toLocaleString()} RSD</div>
                 </div>
                 <div class="item-quantity">
-                    <button onclick="updateCartItem('${item.id}', -1)">-</button>
+                    <button onclick="decrementQuantity('${item.id}', '${item.name}', ${item.price})">-</button>
                     <span>${item.quantity}</span>
-                    <button onclick="updateCartItem('${item.id}', 1)">+</button>
+                    <button onclick="incrementQuantity('${item.id}', '${item.name}', ${item.price})">+</button>
                 </div>
             </div>
         `).join('');
@@ -366,7 +348,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         const cartTotal = document.getElementById('cart-total');
         if (cartTotal) {
-            cartTotal.textContent = formatPrice(total);
+            cartTotal.textContent = total.toLocaleString() + ' RSD';
         }
     }
     
@@ -519,79 +501,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     cartContainer.classList.add('hidden');
                 };
             };
-        });
-    }
-    
-    // Add to cart function
-    function addToCart(itemId, name, price) {
-        console.log('Adding to cart:', itemId);
-        if (!tableId) {
-            alert('Molimo vas da prvo izaberete sto');
-            return;
-        }
-        
-        fetch(`/api/cart/${tableId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                itemId: itemId,
-                name: name,
-                price: price,
-                quantity: 1
-            })
-        })
-        .then(response => response.json())
-        .then(updatedCart => {
-            console.log('Cart updated:', updatedCart);
-            cart = updatedCart;
-            updateCartDisplay();
-        })
-        .catch(error => console.error('Error updating cart:', error));
-    }
-    
-    function updateCartItem(itemId, change, name = '', price = 0) {
-        if (!tableId) {
-            alert('Molimo vas da prvo izaberete sto');
-            return;
-        }
-        
-        // Find current quantity in cart
-        const currentItem = cart.find(item => item.id === itemId);
-        const currentQty = currentItem ? currentItem.quantity : 0;
-        const newQty = currentQty + change;
-        
-        // Don't allow negative quantities
-        if (newQty < 0) return;
-        
-        fetch(`/api/cart/${tableId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                itemId: itemId,
-                name: name,
-                price: price,
-                quantity: change
-            })
-        })
-        .then(response => response.json())
-        .then(updatedCart => {
-            cart = updatedCart;
-            updateCartDisplay();
-            
-            // Update quantity display in menu
-            const quantityElement = document.getElementById(`quantity-${itemId}`);
-            if (quantityElement) {
-                const newQuantity = cart.find(item => item.id === itemId)?.quantity || 0;
-                quantityElement.textContent = newQuantity;
-            }
-        })
-        .catch(error => {
-            console.error('Error updating cart:', error);
-            alert('Došlo je do greške prilikom ažuriranja korpe');
         });
     }
 });
