@@ -6,4 +6,4 @@ bucket = "./public"
 
 [[kv_namespaces]]
 binding = "CARTS"
-id = "your-kv-namespace-id" # You'll get this from Cloudflare dashboard 
+id = "bc1335e54de24afebfa14c6291d3612f" 
