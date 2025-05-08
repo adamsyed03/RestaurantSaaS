@@ -474,47 +474,73 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Payment button handlers
         document.querySelectorAll('.payment-btn').forEach(button => {
-            button.onclick = function() {
+            button.onclick = async function() {
                 const paymentType = this.dataset.payment;
                 const notes = document.getElementById('customer-notes').value;
                 
-                // Show confirmation message
-                checkoutContent.innerHTML = `
-                    <div class="checkout-header">
-                        <img src="/Images/RestaurantLogoTango.jpg" alt="Tango Pub Logo" class="checkout-logo">
-                        <h2>Porudžbina potvrđena</h2>
-                        <button id="close-confirmation">&times;</button>
-                    </div>
-                    
-                    <div class="confirmation-message">
-                        <div class="success-icon">✓</div>
-                        <h3>Hvala na porudžbini!</h3>
-                        <p>Vaša porudžbina je uspešno primljena.</p>
-                        <p>Plaćanje: ${paymentType === 'cash' ? 'Gotovina' : 'Kartica'}</p>
-                    </div>
-                    
-                    <button id="finish-order-btn" class="btn btn-primary">U redu</button>
-                `;
-                
-                // Reset all quantity displays in the menu
-                document.querySelectorAll('[id^="quantity-"]').forEach(element => {
-                    element.textContent = '0';
-                });
-                
-                // Clear the cart
-                cart = [];
-                updateCartDisplay();
-                
-                // Add event listener for the finish button
-                document.getElementById('finish-order-btn').onclick = function() {
-                    document.body.removeChild(checkoutOverlay);
-                    cartContainer.classList.add('hidden');
+                // Create order object
+                const order = {
+                    tableId: tableId,
+                    items: cart,
+                    total: total,
+                    paymentType: paymentType,
+                    notes: notes,
+                    timestamp: new Date().toISOString()
                 };
-                
-                document.getElementById('close-confirmation').onclick = function() {
-                    document.body.removeChild(checkoutOverlay);
-                    cartContainer.classList.add('hidden');
-                };
+
+                try {
+                    // Send order to API
+                    const response = await fetch('/api/orders', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(order)
+                    });
+
+                    if (!response.ok) throw new Error('Failed to submit order');
+
+                    // Show confirmation message
+                    checkoutContent.innerHTML = `
+                        <div class="checkout-header">
+                            <h2>Porudžbina potvrđena</h2>
+                            <button id="close-confirmation">&times;</button>
+                        </div>
+                        
+                        <div class="confirmation-message">
+                            <div class="success-icon">✓</div>
+                            <h3>Hvala na porudžbini!</h3>
+                            <p>Vaša porudžbina je uspešno primljena.</p>
+                            <p>Plaćanje: ${paymentType === 'cash' ? 'Gotovina' : 'Kartica'}</p>
+                        </div>
+                        
+                        <button id="finish-order-btn" class="btn btn-primary">U redu</button>
+                    `;
+                    
+                    // Reset all quantity displays in the menu
+                    document.querySelectorAll('[id^="quantity-"]').forEach(element => {
+                        element.textContent = '0';
+                    });
+                    
+                    // Clear the cart
+                    cart = [];
+                    updateCartDisplay();
+                    
+                    // Add event listener for the finish button
+                    document.getElementById('finish-order-btn').onclick = function() {
+                        document.body.removeChild(checkoutOverlay);
+                        cartContainer.classList.add('hidden');
+                    };
+                    
+                    document.getElementById('close-confirmation').onclick = function() {
+                        document.body.removeChild(checkoutOverlay);
+                        cartContainer.classList.add('hidden');
+                    };
+
+                } catch (error) {
+                    console.error('Error submitting order:', error);
+                    alert('Došlo je do greške prilikom slanja porudžbine. Molimo pokušajte ponovo.');
+                }
             };
         });
     }
