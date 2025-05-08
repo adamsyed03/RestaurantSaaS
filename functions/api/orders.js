@@ -1,64 +1,68 @@
 export async function onRequest(context) {
     const { request, env } = context;
     
-    // Add CORS headers
-    const headers = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Content-Type': 'application/json'
-    };
-
-    // Handle OPTIONS request for CORS
-    if (request.method === 'OPTIONS') {
-        return new Response(null, { headers });
+    // First, check if we have access to KV
+    if (!env.CARTS) {
+        return new Response(JSON.stringify({ 
+            error: 'KV namespace not available' 
+        }), { 
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
-    
+
     try {
-        if (request.method === 'GET') {
-            // Get all orders
-            const orders = await env.CARTS.list();
-            return new Response(JSON.stringify(orders), { headers });
-        }
-        
         if (request.method === 'POST') {
-            const contentType = request.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                throw new Error('Content-Type must be application/json');
-            }
-
+            // Log the incoming request
+            console.log('Received POST request');
+            
             const orderData = await request.json();
-            if (!orderData.tableId || !orderData.items) {
-                throw new Error('Invalid order data');
-            }
+            console.log('Order data:', orderData);
 
-            const orderId = `order_${Date.now()}_${orderData.tableId}`;
-            await env.CARTS.put(orderId, JSON.stringify({
-                ...orderData,
-                id: orderId,
-                status: 'active'
-            }));
+            // Generate a simpler order ID
+            const orderId = `order_${Date.now()}`;
+
+            // Try to write to KV
+            try {
+                await env.CARTS.put(orderId, JSON.stringify({
+                    ...orderData,
+                    id: orderId,
+                    status: 'active'
+                }));
+            } catch (kvError) {
+                console.error('KV Error:', kvError);
+                return new Response(JSON.stringify({ 
+                    error: 'Failed to save to KV',
+                    details: kvError.message 
+                }), { 
+                    status: 500,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
 
             return new Response(JSON.stringify({ 
                 success: true, 
                 orderId 
-            }), { headers });
+            }), { 
+                headers: { 'Content-Type': 'application/json' }
+            });
         }
 
         return new Response(JSON.stringify({ 
             error: 'Method not allowed' 
         }), { 
-            status: 405, 
-            headers 
+            status: 405,
+            headers: { 'Content-Type': 'application/json' }
         });
 
     } catch (error) {
-        console.error('Order processing error:', error);
+        console.error('Processing error:', error);
         return new Response(JSON.stringify({ 
-            error: error.message 
+            error: error.message,
+            type: error.constructor.name
         }), { 
-            status: 400, 
-            headers 
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
         });
     }
 } 
