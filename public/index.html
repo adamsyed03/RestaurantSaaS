@@ -105,26 +105,18 @@
                 <!-- Category tabs will be added here dynamically -->
             </div>
             
-            <div id="menu-content">
-                <!-- Menu items will be added here dynamically -->
-            </div>
+            <div id="menu-content"></div>
         </div>
         
-        <div id="cart-container" class="cart-container">
-            <div class="cart-header">
-                <h3>Vaša korpa</h3>
-                <button id="close-cart-btn">&times;</button>
-            </div>
-            
-            <div id="cart-items">
-                <!-- Cart items will be added here dynamically -->
-            </div>
-            
-            <div class="cart-footer">
-                <div class="cart-total">
-                    Ukupno: <span id="cart-total">0 RSD</span>
+        <div id="cart-container" class="cart-overlay hidden">
+            <div class="cart-panel">
+                <div class="cart-header">
+                    <h2>Vaša porudžbina</h2>
+                    <button id="close-cart-btn">&times;</button>
                 </div>
-                <button id="checkout-btn" class="btn-primary">Nastavi na plaćanje</button>
+                <div id="cart-items"></div>
+                <div id="cart-total">Ukupno: 0 дин.</div>
+                <button id="checkout-btn" class="btn">Poruči</button>
             </div>
         </div>
     </div>
