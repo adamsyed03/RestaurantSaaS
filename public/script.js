@@ -20,10 +20,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const checkoutBtn = document.getElementById('checkout-btn');
     
     // Variables
-    let tableId = '';
+    let tableId = null;
     let cart = [];
     let currencySymbol = 'дин.';
     let menuData = null;
+    
+    // Get table number from URL or localStorage
+    const urlParams = new URLSearchParams(window.location.search);
+    tableId = urlParams.get('table') || localStorage.getItem('tableId');
+    
+    if (tableId) {
+        currentTableDisplay.textContent = tableId.replace('table', '');
+        // Load cart for this table
+        loadCart();
+    }
     
     // Event listeners for table selection
     startOrderBtn.addEventListener('click', function() {
@@ -91,11 +101,20 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Functions
     function loadCart() {
+        if (!tableId) return;
+        
         fetch(`/api/cart/${tableId}`)
             .then(response => response.json())
             .then(data => {
                 cart = data;
                 updateCartDisplay();
+                // Update quantity displays in menu
+                cart.forEach(item => {
+                    const quantityElement = document.getElementById(`quantity-${item.id}`);
+                    if (quantityElement) {
+                        quantityElement.textContent = item.quantity;
+                    }
+                });
             })
             .catch(error => console.error('Error loading cart:', error));
     }
@@ -276,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function formatPrice(price) {
-        return `${price.toLocaleString('sr-RS')} ${currencySymbol}`;
+        return price.toLocaleString() + ' ' + (currencySymbol || 'RSD');
     }
     
     function getItemQuantity(itemId) {
@@ -323,50 +342,32 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function updateCartDisplay() {
-        console.log('Updating cart display');
-        cartItems.innerHTML = '';
+        const cartCount = document.getElementById('cart-count');
+        const totalQuantity = cart.reduce((total, item) => total + item.quantity, 0);
+        cartCount.textContent = totalQuantity;
         
-        const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-        cartCount.textContent = totalItems;
+        const cartItems = document.getElementById('cart-items');
+        if (!cartItems) return;
         
-        if (cart.length === 0) {
-            cartItems.innerHTML = '<p class="empty-cart-message">Vaša korpa je prazna</p>';
-            cartTotal.textContent = `Ukupno: 0 ${currencySymbol}`;
-            return;
+        cartItems.innerHTML = cart.map(item => `
+            <div class="cart-item">
+                <div class="item-info">
+                    <h4>${item.name}</h4>
+                    <div class="price">${formatPrice(item.price * item.quantity)}</div>
+                </div>
+                <div class="item-quantity">
+                    <button onclick="updateCartItem('${item.id}', -1)">-</button>
+                    <span>${item.quantity}</span>
+                    <button onclick="updateCartItem('${item.id}', 1)">+</button>
+                </div>
+            </div>
+        `).join('');
+        
+        const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const cartTotal = document.getElementById('cart-total');
+        if (cartTotal) {
+            cartTotal.textContent = formatPrice(total);
         }
-        
-        let total = 0;
-        
-        cart.forEach(item => {
-            const cartItem = document.createElement('div');
-            cartItem.className = 'cart-item';
-            
-            const itemTotal = item.price * item.quantity;
-            total += itemTotal;
-            
-            const itemName = document.createElement('div');
-            itemName.className = 'cart-item-name';
-            itemName.textContent = `${item.name} x${item.quantity}`;
-            
-            const itemPrice = document.createElement('div');
-            itemPrice.className = 'cart-item-price';
-            itemPrice.textContent = formatPrice(itemTotal);
-            
-            const removeBtn = document.createElement('button');
-            removeBtn.className = 'remove-item-btn';
-            removeBtn.innerHTML = '&times;';
-            removeBtn.onclick = function() {
-                updateItemQuantity(item.id, -item.quantity);
-            };
-            
-            cartItem.appendChild(itemName);
-            cartItem.appendChild(itemPrice);
-            cartItem.appendChild(removeBtn);
-            
-            cartItems.appendChild(cartItem);
-        });
-        
-        cartTotal.textContent = `Ukupno: ${formatPrice(total)}`;
     }
     
     function animateButton(button) {
@@ -551,8 +552,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function updateCartItem(itemId, change, name = '', price = 0) {
-        console.log('Updating cart item:', itemId, change);
-        
         if (!tableId) {
             alert('Molimo vas da prvo izaberete sto');
             return;
@@ -580,7 +579,6 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(updatedCart => {
-            console.log('Cart updated:', updatedCart);
             cart = updatedCart;
             updateCartDisplay();
             
@@ -591,6 +589,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 quantityElement.textContent = newQuantity;
             }
         })
-        .catch(error => console.error('Error updating cart:', error));
+        .catch(error => {
+            console.error('Error updating cart:', error);
+            alert('Došlo je do greške prilikom ažuriranja korpe');
+        });
     }
 });
