@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tango Pub - Porudžbine</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="orders-container">
+        <header>
+            <img src="/Images/RestaurantLogoTango.jpg" alt="Tango Pub Logo" class="restaurant-logo">
+            <h1>Aktivne Porudžbine</h1>
+        </header>
+
+        <div class="orders-filters">
+            <button class="filter-btn active" data-status="active">Aktivne</button>
+            <button class="filter-btn" data-status="completed">Završene</button>
+        </div>
+
+        <div class="orders-list" id="orders-list">
+            <!-- Orders will be populated here -->
+        </div>
+    </div>
+    <script src="orders.js"></script>
+</body>
+</html> 

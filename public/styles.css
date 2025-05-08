@@ -843,3 +843,96 @@ header {
 .restaurant-info p {
     margin: 5px 0;
 }
+
+/* Orders page styles */
+.orders-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.orders-filters {
+    margin: 20px 0;
+    display: flex;
+    gap: 10px;
+}
+
+.filter-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background: #f5f5f5;
+    cursor: pointer;
+}
+
+.filter-btn.active {
+    background: #D4AF37;
+    color: white;
+}
+
+.order-card {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.order-table {
+    font-size: 18px;
+    font-weight: bold;
+    color: #D4AF37;
+}
+
+.order-time {
+    color: #666;
+}
+
+.order-items {
+    margin-bottom: 15px;
+}
+
+.order-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.order-total {
+    text-align: right;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.order-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.order-btn {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.complete-btn {
+    background: #4CAF50;
+    color: white;
+}
+
+.cancel-btn {
+    background: #f44336;
+    color: white;
+}

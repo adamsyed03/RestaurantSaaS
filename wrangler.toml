@@ -7,4 +7,8 @@ include = ["images/**/*"]
 
 [[kv_namespaces]]
 binding = "CARTS"
-id = "bc1335e54de24afebfa14c6291d3612f" 
+id = "bc1335e54de24afebfa14c6291d3612f"
+
+[[kv_namespaces]]
+binding = "ORDERS"
+id = "" # You'll need to create this and add the ID 
