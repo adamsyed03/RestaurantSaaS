@@ -31,15 +31,9 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        tableId = 'table' + tableNumber;
+        tableId = `table${tableNumber}`;
         currentTableDisplay.textContent = tableNumber;
-        
-        // Hide table selection and show main container
-        tableSelection.classList.add('hidden');
-        mainContainer.classList.remove('hidden');
-        
-        // Load cart for this table
-        loadCart();
+        showServiceChoice();
     });
     
     // Allow Enter key to submit table number
@@ -369,6 +363,39 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 300);
     }
     
+    function showServiceChoice() {
+        const tableSelection = document.getElementById('table-selection');
+        tableSelection.innerHTML = `
+            <div class="table-selection-content">
+                <div class="logo-container">
+                    <img src="/images/tango-logo.png" alt="Tango Pub Logo" class="restaurant-logo">
+                </div>
+                <h2>Sto #${tableId.replace('table', '')}</h2>
+                <div class="service-choice-buttons">
+                    <button id="call-waiter-btn" class="btn btn-secondary">
+                        <i class="fas fa-bell"></i>
+                        Pozovi konobara
+                    </button>
+                    <button id="order-online-btn" class="btn btn-primary">
+                        <i class="fas fa-utensils"></i>
+                        Naruči online
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // Event listeners for the choice buttons
+        document.getElementById('call-waiter-btn').onclick = function() {
+            // Alert for demonstration - this could be connected to a waiter notification system
+            alert('Konobar je pozvan i uskoro će doći do vašeg stola.');
+        };
+
+        document.getElementById('order-online-btn').onclick = function() {
+            tableSelection.classList.add('hidden');
+            document.getElementById('main-container').classList.remove('hidden');
+        };
+    }
+    
     function showCheckoutScreen() {
         const checkoutOverlay = document.createElement('div');
         checkoutOverlay.className = 'checkout-overlay';
@@ -376,41 +403,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const checkoutContent = document.createElement('div');
         checkoutContent.className = 'checkout-content';
         
-        // Checkout header
-        const checkoutHeader = document.createElement('div');
-        checkoutHeader.className = 'checkout-header';
-        checkoutHeader.innerHTML = `
-            <h2>Finalizacija porudžbine</h2>
-            <button id="close-checkout">&times;</button>
-        `;
-        
-        // Checkout steps
-        const checkoutSteps = document.createElement('div');
-        checkoutSteps.className = 'checkout-steps';
-        checkoutSteps.innerHTML = `
-            <div class="step active" data-step="details">1. Podaci</div>
-            <div class="step" data-step="payment">2. Plaćanje</div>
-            <div class="step" data-step="confirmation">3. Potvrda</div>
-        `;
-        
-        // Checkout body
-        const checkoutBody = document.createElement('div');
-        checkoutBody.className = 'checkout-body';
-        
-        // Restaurant info
-        const restaurantInfo = `
-            <div class="restaurant-info">
-                <p><strong>Tango Pub</strong></p>
-                <p>Kralja Petra I 13, Kragujevac</p>
-                <p>Sto #${tableId.replace('table', '')}</p>
-            </div>
-        `;
-        
-        // Step 1: Customer details
-        const stepDetails = document.createElement('div');
-        stepDetails.className = 'checkout-step-content active';
-        stepDetails.id = 'step-details';
-        
+        // Create order summary HTML
         let orderSummaryHTML = '';
         let total = 0;
         
@@ -425,226 +418,93 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         });
         
-        stepDetails.innerHTML = `
-            ${restaurantInfo}
-            <div class="form-group">
-                <label for="customer-name">Ime i prezime *</label>
-                <input type="text" id="customer-name" required>
+        // Simplified checkout content
+        checkoutContent.innerHTML = `
+            <div class="checkout-header">
+                <h2>Vaša porudžbina</h2>
+                <button id="close-checkout">&times;</button>
             </div>
-            <div class="form-row">
-                <div class="form-group half">
-                    <label for="customer-phone">Telefon *</label>
-                    <input type="tel" id="customer-phone" required>
-                </div>
-                <div class="form-group half">
-                    <label for="customer-email">Email *</label>
-                    <input type="email" id="customer-email" required>
-                </div>
+            
+            <div class="restaurant-info">
+                <p><strong>Tango Pub</strong></p>
+                <p>Kralja Petra I 13, Kragujevac</p>
+                <p>Sto #${tableId.replace('table', '')}</p>
             </div>
+            
+            <div class="order-summary">
+                ${orderSummaryHTML}
+                <div class="summary-total">Ukupno: ${formatPrice(total)}</div>
+            </div>
+            
             <div class="form-group">
                 <label for="customer-notes">Napomene (alergije, posebni zahtevi)</label>
                 <textarea id="customer-notes" rows="3"></textarea>
             </div>
             
-            <div class="order-summary">
-                <h3>Vaša porudžbina</h3>
-                ${orderSummaryHTML}
-                <div class="summary-total">Ukupno: ${formatPrice(total)}</div>
-            </div>
-            
-            <div class="form-actions">
-                <button id="cancel-checkout" class="btn btn-secondary">Otkaži</button>
-                <button id="to-payment-btn" class="btn btn-primary">Nastavi</button>
+            <div class="payment-choice">
+                <h3>Način plaćanja:</h3>
+                <div class="payment-buttons">
+                    <button class="btn payment-btn" data-payment="cash">
+                        <i class="fas fa-money-bill-wave"></i>
+                        Gotovina
+                    </button>
+                    <button class="btn payment-btn" data-payment="card">
+                        <i class="fas fa-credit-card"></i>
+                        Kartica
+                    </button>
+                </div>
             </div>
         `;
-        
-        // Step 2: Payment
-        const stepPayment = document.createElement('div');
-        stepPayment.className = 'checkout-step-content';
-        stepPayment.id = 'step-payment';
-        stepPayment.innerHTML = `
-            ${restaurantInfo}
-            <div class="payment-methods">
-                <h3>Način plaćanja</h3>
-                
-                <div class="payment-method">
-                    <input type="radio" id="payment-cash" name="payment-method" value="cash" checked>
-                    <label for="payment-cash">Gotovina</label>
-                </div>
-                
-                <div class="payment-method">
-                    <input type="radio" id="payment-card" name="payment-method" value="card">
-                    <label for="payment-card">Platna kartica</label>
-                </div>
-            </div>
-            
-            <div id="card-payment-form" style="display: none;">
-                <div class="form-group">
-                    <label for="card-number">Broj kartice *</label>
-                    <input type="text" id="card-number" placeholder="1234 5678 9012 3456">
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group half">
-                        <label for="card-expiry">Važi do *</label>
-                        <input type="text" id="card-expiry" placeholder="MM/YY">
-                    </div>
-                    <div class="form-group half">
-                        <label for="card-cvv">CVV *</label>
-                        <input type="text" id="card-cvv" placeholder="123">
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="card-name">Ime na kartici *</label>
-                    <input type="text" id="card-name">
-                </div>
-            </div>
-            
-            <div class="order-summary">
-                <h3>Vaša porudžbina</h3>
-                ${orderSummaryHTML}
-                <div class="summary-total">Ukupno: ${formatPrice(total)}</div>
-            </div>
-            
-            <div class="form-actions">
-                <button id="back-to-details-btn" class="btn btn-secondary">Nazad</button>
-                <button id="to-confirmation-btn" class="btn btn-primary">Potvrdi porudžbinu</button>
-            </div>
-        `;
-        
-        // Step 3: Confirmation
-        const stepConfirmation = document.createElement('div');
-        stepConfirmation.className = 'checkout-step-content';
-        stepConfirmation.id = 'step-confirmation';
-        stepConfirmation.innerHTML = `
-            <div class="confirmation-message">
-                <div class="success-icon">✓</div>
-                <h3>Hvala na porudžbini!</h3>
-                <p>Vaša porudžbina je uspešno primljena.</p>
-                <p>Konobar će vam doneti porudžbinu uskoro.</p>
-                <button class="btn btn-primary" id="finish-order-btn">Završi</button>
-            </div>
-        `;
-        
-        // Assemble checkout
-        checkoutBody.appendChild(stepDetails);
-        checkoutBody.appendChild(stepPayment);
-        checkoutBody.appendChild(stepConfirmation);
-        
-        checkoutContent.appendChild(checkoutHeader);
-        checkoutContent.appendChild(checkoutSteps);
-        checkoutContent.appendChild(checkoutBody);
         
         checkoutOverlay.appendChild(checkoutContent);
         document.body.appendChild(checkoutOverlay);
         
-        // Add event listeners
+        // Event listeners
         document.getElementById('close-checkout').onclick = function() {
             document.body.removeChild(checkoutOverlay);
         };
         
-        document.getElementById('cancel-checkout').onclick = function() {
-            document.body.removeChild(checkoutOverlay);
-        };
-        
-        document.getElementById('to-payment-btn').onclick = function() {
-            // Validate customer details
-            const name = document.getElementById('customer-name').value;
-            const phone = document.getElementById('customer-phone').value;
-            const email = document.getElementById('customer-email').value;
-            
-            if (!name || !phone || !email) {
-                alert('Molimo popunite sva obavezna polja');
-                return;
-            }
-            
-            // Switch to payment step
-            document.querySelectorAll('.checkout-step-content').forEach(el => el.classList.remove('active'));
-            document.getElementById('step-payment').classList.add('active');
-            
-            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
-            document.querySelector('.step[data-step="payment"]').classList.add('active');
-        };
-        
-        document.getElementById('back-to-details-btn').onclick = function() {
-            // Switch back to details step
-            document.querySelectorAll('.checkout-step-content').forEach(el => el.classList.remove('active'));
-            document.getElementById('step-details').classList.add('active');
-            
-            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
-            document.querySelector('.step[data-step="details"]').classList.add('active');
-        };
-        
-        document.getElementById('to-confirmation-btn').onclick = function() {
-            // Validate payment details if card payment selected
-            const paymentMethod = document.querySelector('input[name="payment-method"]:checked').value;
-            
-            if (paymentMethod === 'card') {
-                const cardNumber = document.getElementById('card-number').value;
-                const cardExpiry = document.getElementById('card-expiry').value;
-                const cardCvv = document.getElementById('card-cvv').value;
-                const cardName = document.getElementById('card-name').value;
+        // Payment button handlers
+        document.querySelectorAll('.payment-btn').forEach(button => {
+            button.onclick = function() {
+                const paymentType = this.dataset.payment;
+                const notes = document.getElementById('customer-notes').value;
                 
-                if (!cardNumber || !cardExpiry || !cardCvv || !cardName) {
-                    alert('Molimo popunite sve podatke o kartici');
-                    return;
-                }
-            }
-            
-            // Switch to confirmation step
-            document.querySelectorAll('.checkout-step-content').forEach(el => el.classList.remove('active'));
-            document.getElementById('step-confirmation').classList.add('active');
-            
-            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
-            document.querySelector('.step[data-step="confirmation"]').classList.add('active');
-            
-            // Clear cart
-            cart = [];
-            updateCartDisplay();
-        };
-        
-        document.getElementById('finish-order-btn').onclick = function() {
-            document.body.removeChild(checkoutOverlay);
-            cartContainer.classList.add('hidden');
-        };
-        
-        // Toggle card payment form visibility
-        document.querySelectorAll('input[name="payment-method"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                const cardForm = document.getElementById('card-payment-form');
-                if (this.value === 'card') {
-                    cardForm.style.display = 'block';
-                } else {
-                    cardForm.style.display = 'none';
-                }
-            });
-        });
-        
-        // Format card number with spaces
-        document.getElementById('card-number').addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-            let formattedValue = '';
-            
-            for (let i = 0; i < value.length; i++) {
-                if (i > 0 && i % 4 === 0) {
-                    formattedValue += ' ';
-                }
-                formattedValue += value[i];
-            }
-            
-            e.target.value = formattedValue;
-        });
-        
-        // Format expiry date
-        document.getElementById('card-expiry').addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            
-            if (value.length > 2) {
-                value = value.substring(0, 2) + '/' + value.substring(2, 4);
-            }
-            
-            e.target.value = value;
+                // Show confirmation message
+                checkoutContent.innerHTML = `
+                    <div class="checkout-header">
+                        <h2>Porudžbina potvrđena</h2>
+                        <button id="close-confirmation">&times;</button>
+                    </div>
+                    
+                    <div class="confirmation-message">
+                        <div class="success-icon">✓</div>
+                        <h3>Hvala na porudžbini!</h3>
+                        <p>Vaša porudžbina je uspešno primljena.</p>
+                        <p>Plaćanje: ${paymentType === 'cash' ? 'Gotovina' : 'Kartica'}</p>
+                    </div>
+                    
+                    <button id="finish-order-btn" class="btn btn-primary">U redu</button>
+                `;
+                
+                // Alert waiter (this could be connected to a proper notification system)
+                alert(`Nova porudžbina za sto #${tableId.replace('table', '')}\nNačin plaćanja: ${paymentType === 'cash' ? 'Gotovina' : 'Kartica'}`);
+                
+                // Clear cart
+                cart = [];
+                updateCartDisplay();
+                
+                // Add event listener for the finish button
+                document.getElementById('finish-order-btn').onclick = function() {
+                    document.body.removeChild(checkoutOverlay);
+                    cartContainer.classList.add('hidden');
+                };
+                
+                document.getElementById('close-confirmation').onclick = function() {
+                    document.body.removeChild(checkoutOverlay);
+                    cartContainer.classList.add('hidden');
+                };
+            };
         });
     }
 });
