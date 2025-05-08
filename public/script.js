@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="menu-items">
                     ${category.items.map(item => `
                         <div class="menu-item">
-                            <img src="${item.image}" alt="${item.name}" class="menu-item-image">
+                            <img src="/Images/menu/${item.image}" alt="${item.name}" class="menu-item-image">
                             <div class="item-info">
                                 <h4>${item.name}</h4>
                                 <p>${item.description}</p>
@@ -356,7 +356,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tableSelection.innerHTML = `
             <div class="table-selection-content">
                 <div class="logo-container">
-                    <img src="/images/RestaurantLogoTango.jpg" alt="Tango Pub Logo" class="restaurant-logo">
+                    <img src="/Images/RestaurantLogoTango.jpg" alt="Tango Pub Logo" class="restaurant-logo">
                 </div>
                 <h2>Sto #${tableId.replace('table', '')}</h2>
                 <div class="service-choice-buttons">
@@ -387,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function showTableSelection() {
         mainContainer.innerHTML = `
             <div class="table-selection">
-                <img src="/images/RestaurantLogoTango.jpg" alt="Tango Pub Logo" class="restaurant-logo">
+                <img src="/Images/RestaurantLogoTango.jpg" alt="Tango Pub Logo" class="restaurant-logo">
                 <h2>Sto #${tableId.replace('table', '')}</h2>
                 <div class="service-choice-buttons">
                     <button id="call-waiter-btn" class="btn btn-secondary">
@@ -428,7 +428,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Simplified checkout content
         checkoutContent.innerHTML = `
             <div class="checkout-header">
-                <img src="/images/RestaurantLogoTango.jpg" alt="Tango Pub Logo" class="checkout-logo">
+                <img src="/Images/RestaurantLogoTango.jpg" alt="Tango Pub Logo" class="checkout-logo">
                 <h2>Vaša porudžbina</h2>
                 <button id="close-checkout">&times;</button>
             </div>
@@ -481,7 +481,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Show confirmation message
                 checkoutContent.innerHTML = `
                     <div class="checkout-header">
-                        <img src="/images/RestaurantLogoTango.jpg" alt="Tango Pub Logo" class="checkout-logo">
+                        <img src="/Images/RestaurantLogoTango.jpg" alt="Tango Pub Logo" class="checkout-logo">
                         <h2>Porudžbina potvrđena</h2>
                         <button id="close-confirmation">&times;</button>
                     </div>
