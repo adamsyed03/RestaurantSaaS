@@ -475,70 +475,45 @@ document.addEventListener('DOMContentLoaded', function() {
         // Payment button handlers
         document.querySelectorAll('.payment-btn').forEach(button => {
             button.onclick = async function() {
-                const paymentType = this.dataset.payment;
-                const notes = document.getElementById('customer-notes').value;
-                
-                // Create order object
-                const order = {
-                    tableId: tableId.replace('table', ''),  // Just the number
-                    items: cart.map(item => ({
-                        name: item.name,
-                        quantity: item.quantity,
-                        price: item.price
-                    })),
-                    total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-                    paymentType: paymentType,
-                    notes: notes,
-                    timestamp: new Date().toISOString()
-                };
-
                 try {
-                    console.log('Sending order:', order);  // Debug log
+                    const paymentType = this.dataset.payment;
+                    const notes = document.getElementById('customer-notes').value;
                     
+                    const orderData = {
+                        table: tableId,
+                        items: cart,
+                        total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+                        payment: paymentType,
+                        notes: notes,
+                        time: new Date().toISOString()
+                    };
+
                     const response = await fetch('/api/orders', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify(order)
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(orderData)
                     });
 
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error('Error response:', errorText);  // Debug log
+                    if (response.ok) {
+                        cart = [];
+                        updateCartDisplay();
+                        
+                        checkoutContent.innerHTML = `
+                            <div class="checkout-header">
+                                <h2>Porudžbina potvrđena</h2>
+                                <button id="close-confirmation">&times;</button>
+                            </div>
+                            <div class="confirmation-message">
+                                <div class="success-icon">✓</div>
+                                <h3>Hvala na porudžbini!</h3>
+                                <p>Vaša porudžbina je uspešno primljena.</p>
+                            </div>
+                        `;
+                    } else {
                         throw new Error('Failed to submit order');
                     }
-
-                    const result = await response.json();
-                    console.log('Order result:', result);  // Debug log
-
-                    // Rest of the success handling code stays exactly the same
-                    checkoutContent.innerHTML = `
-                        <div class="checkout-header">
-                            <h2>Porudžbina potvrđena</h2>
-                            <button id="close-confirmation">&times;</button>
-                        </div>
-                        
-                        <div class="confirmation-message">
-                            <div class="success-icon">✓</div>
-                            <h3>Hvala na porudžbini!</h3>
-                            <p>Vaša porudžbina je uspešno primljena.</p>
-                            <p>Plaćanje: ${paymentType === 'cash' ? 'Gotovina' : 'Kartica'}</p>
-                        </div>
-                    `;
-                    
-                    // Reset cart and quantities
-                    document.querySelectorAll('[id^="quantity-"]').forEach(element => {
-                        element.textContent = '0';
-                    });
-                    
-                    cart = [];
-                    updateCartDisplay();
-
                 } catch (error) {
-                    console.error('Checkout error:', error);
-                    alert('Došlo je do greške prilikom slanja porudžbine. Molimo pokušajte ponovo.');
+                    alert('Došlo je do greške. Molimo pokušajte ponovo.');
                 }
             };
         });
