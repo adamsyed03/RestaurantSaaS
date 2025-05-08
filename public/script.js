@@ -407,29 +407,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const checkoutOverlay = document.createElement('div');
         checkoutOverlay.className = 'checkout-overlay';
         
+        const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        
+        const orderSummaryHTML = cart.map(item => `
+            <div class="order-item">
+                <span>${item.name} x${item.quantity}</span>
+                <span>${(item.price * item.quantity).toLocaleString()} RSD</span>
+            </div>
+        `).join('');
+        
         const checkoutContent = document.createElement('div');
         checkoutContent.className = 'checkout-content';
-        
-        // Create order summary HTML
-        let orderSummaryHTML = '';
-        let total = 0;
-        
-        cart.forEach(item => {
-            const itemTotal = item.price * item.quantity;
-            total += itemTotal;
-            orderSummaryHTML += `
-                <div class="summary-item">
-                    <div>${item.name} x${item.quantity}</div>
-                    <div>${formatPrice(itemTotal)}</div>
-                </div>
-            `;
-        });
-        
-        // Simplified checkout content
         checkoutContent.innerHTML = `
             <div class="checkout-header">
                 <img src="/Images/RestaurantLogoTango.jpg" alt="Tango Pub Logo" class="checkout-logo">
-                <h2>Vaša porudžbina</h2>
+                <h2>Potvrda porudžbine</h2>
                 <button id="close-checkout">&times;</button>
             </div>
             
@@ -441,33 +433,25 @@ document.addEventListener('DOMContentLoaded', function() {
             
             <div class="order-summary">
                 ${orderSummaryHTML}
-                <div class="summary-total">Ukupno: ${formatPrice(total)}</div>
+                <div class="summary-total">Ukupno: ${total.toLocaleString()} RSD</div>
             </div>
             
-            <div class="form-group">
-                <label for="customer-notes">Napomene (alergije, posebni zahtevi)</label>
-                <textarea id="customer-notes" rows="3"></textarea>
+            <div class="checkout-notes">
+                <label for="customer-notes">Napomene (alergije, posebni zahtevi):</label>
+                <textarea id="customer-notes" rows="2"></textarea>
             </div>
             
-            <div class="payment-choice">
-                <h3>Način plaćanja:</h3>
-                <div class="payment-buttons">
-                    <button class="btn payment-btn" data-payment="cash">
-                        <i class="fas fa-money-bill-wave"></i>
-                        Gotovina
-                    </button>
-                    <button class="btn payment-btn" data-payment="card">
-                        <i class="fas fa-credit-card"></i>
-                        Kartica
-                    </button>
-                </div>
+            <div class="payment-methods">
+                <h3>Izaberite način plaćanja:</h3>
+                <button class="payment-btn" data-payment="cash">Gotovina</button>
+                <button class="payment-btn" data-payment="card">Kartica</button>
             </div>
         `;
         
         checkoutOverlay.appendChild(checkoutContent);
         document.body.appendChild(checkoutOverlay);
         
-        // Event listeners
+        // Close button handler
         document.getElementById('close-checkout').onclick = function() {
             document.body.removeChild(checkoutOverlay);
         };
@@ -475,20 +459,24 @@ document.addEventListener('DOMContentLoaded', function() {
         // Payment button handlers
         document.querySelectorAll('.payment-btn').forEach(button => {
             button.onclick = async function() {
-                const paymentType = this.dataset.payment;
-                const notes = document.getElementById('customer-notes').value;
-                
-                // Create order object
-                const order = {
-                    tableId: tableId,
-                    items: cart,
-                    total: total,
-                    paymentType: paymentType,
-                    notes: notes,
-                    timestamp: new Date().toISOString()
-                };
-
                 try {
+                    console.log('Payment button clicked:', this.dataset.payment);
+                    
+                    const paymentType = this.dataset.payment;
+                    const notes = document.getElementById('customer-notes').value;
+                    
+                    // Create order object
+                    const order = {
+                        tableId: tableId,
+                        items: cart,
+                        total: total,
+                        paymentType: paymentType,
+                        notes: notes,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    console.log('Sending order:', order);
+
                     // Send order to API
                     const response = await fetch('/api/orders', {
                         method: 'POST',
@@ -498,7 +486,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         body: JSON.stringify(order)
                     });
 
-                    if (!response.ok) throw new Error('Failed to submit order');
+                    console.log('API Response:', response);
+
+                    if (!response.ok) {
+                        const errorData = await response.text();
+                        console.error('API Error:', errorData);
+                        throw new Error(`Failed to submit order: ${errorData}`);
+                    }
 
                     // Show confirmation message
                     checkoutContent.innerHTML = `
@@ -517,16 +511,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         <button id="finish-order-btn" class="btn btn-primary">U redu</button>
                     `;
                     
-                    // Reset all quantity displays in the menu
+                    // Reset quantities and cart
                     document.querySelectorAll('[id^="quantity-"]').forEach(element => {
                         element.textContent = '0';
                     });
                     
-                    // Clear the cart
                     cart = [];
                     updateCartDisplay();
                     
-                    // Add event listener for the finish button
+                    // Add finish button handler
                     document.getElementById('finish-order-btn').onclick = function() {
                         document.body.removeChild(checkoutOverlay);
                         cartContainer.classList.add('hidden');
@@ -538,8 +531,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     };
 
                 } catch (error) {
-                    console.error('Error submitting order:', error);
-                    alert('Došlo je do greške prilikom slanja porudžbine. Molimo pokušajte ponovo.');
+                    console.error('Checkout error:', error);
+                    alert(`Došlo je do greške prilikom slanja porudžbine: ${error.message}`);
                 }
             };
         });
