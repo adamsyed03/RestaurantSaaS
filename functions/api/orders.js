@@ -14,37 +14,51 @@ export async function onRequest(context) {
         return new Response(null, { headers });
     }
     
-    if (request.method === 'GET') {
-        // Get all orders
-        const orders = await env.CARTS.list();
-        return new Response(JSON.stringify(orders), { headers });
-    }
-    
-    if (request.method === 'POST') {
-        try {
-            // Handle new order
-            const order = await request.json();
-            const timestamp = new Date().toISOString();
-            const orderId = `order_${timestamp}_${order.tableId}`;
-            
-            await env.CARTS.put(orderId, JSON.stringify({
-                ...order,
-                id: orderId,
-                status: 'active',
-                timestamp
-            }));
-            
-            return new Response(JSON.stringify({ success: true }), { headers });
-        } catch (error) {
-            return new Response(JSON.stringify({ 
-                error: 'Failed to process order',
-                details: error.message 
-            }), { 
-                status: 400, 
-                headers 
-            });
+    try {
+        if (request.method === 'GET') {
+            // Get all orders
+            const orders = await env.CARTS.list();
+            return new Response(JSON.stringify(orders), { headers });
         }
+        
+        if (request.method === 'POST') {
+            const contentType = request.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Content-Type must be application/json');
+            }
+
+            const orderData = await request.json();
+            if (!orderData.tableId || !orderData.items) {
+                throw new Error('Invalid order data');
+            }
+
+            const orderId = `order_${Date.now()}_${orderData.tableId}`;
+            await env.CARTS.put(orderId, JSON.stringify({
+                ...orderData,
+                id: orderId,
+                status: 'active'
+            }));
+
+            return new Response(JSON.stringify({ 
+                success: true, 
+                orderId 
+            }), { headers });
+        }
+
+        return new Response(JSON.stringify({ 
+            error: 'Method not allowed' 
+        }), { 
+            status: 405, 
+            headers 
+        });
+
+    } catch (error) {
+        console.error('Order processing error:', error);
+        return new Response(JSON.stringify({ 
+            error: error.message 
+        }), { 
+            status: 400, 
+            headers 
+        });
     }
-    
-    return new Response('Method not allowed', { status: 405, headers });
 } 

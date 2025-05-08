@@ -8,6 +8,7 @@ include = ["images/**/*"]
 [[kv_namespaces]]
 binding = "CARTS"
 id = "bc1335e54de24afebfa14c6291d3612f"
+preview_id = "bc1335e54de24afebfa14c6291d3612f"
 
 [[kv_namespaces]]
 binding = "ORDERS"

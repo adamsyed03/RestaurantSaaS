@@ -480,27 +480,40 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Create order object
                 const order = {
-                    tableId: tableId,
-                    items: cart,
-                    total: total,
+                    tableId: tableId.replace('table', ''),  // Just the number
+                    items: cart.map(item => ({
+                        name: item.name,
+                        quantity: item.quantity,
+                        price: item.price
+                    })),
+                    total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
                     paymentType: paymentType,
                     notes: notes,
                     timestamp: new Date().toISOString()
                 };
 
                 try {
-                    // Send order to API
+                    console.log('Sending order:', order);  // Debug log
+                    
                     const response = await fetch('/api/orders', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
                         },
                         body: JSON.stringify(order)
                     });
 
-                    if (!response.ok) throw new Error('Failed to submit order');
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('Error response:', errorText);  // Debug log
+                        throw new Error('Failed to submit order');
+                    }
 
-                    // Show confirmation message
+                    const result = await response.json();
+                    console.log('Order result:', result);  // Debug log
+
+                    // Rest of the success handling code stays exactly the same
                     checkoutContent.innerHTML = `
                         <div class="checkout-header">
                             <h2>Porudžbina potvrđena</h2>
@@ -513,32 +526,18 @@ document.addEventListener('DOMContentLoaded', function() {
                             <p>Vaša porudžbina je uspešno primljena.</p>
                             <p>Plaćanje: ${paymentType === 'cash' ? 'Gotovina' : 'Kartica'}</p>
                         </div>
-                        
-                        <button id="finish-order-btn" class="btn btn-primary">U redu</button>
                     `;
                     
-                    // Reset all quantity displays in the menu
+                    // Reset cart and quantities
                     document.querySelectorAll('[id^="quantity-"]').forEach(element => {
                         element.textContent = '0';
                     });
                     
-                    // Clear the cart
                     cart = [];
                     updateCartDisplay();
-                    
-                    // Add event listener for the finish button
-                    document.getElementById('finish-order-btn').onclick = function() {
-                        document.body.removeChild(checkoutOverlay);
-                        cartContainer.classList.add('hidden');
-                    };
-                    
-                    document.getElementById('close-confirmation').onclick = function() {
-                        document.body.removeChild(checkoutOverlay);
-                        cartContainer.classList.add('hidden');
-                    };
 
                 } catch (error) {
-                    console.error('Error submitting order:', error);
+                    console.error('Checkout error:', error);
                     alert('Došlo je do greške prilikom slanja porudžbine. Molimo pokušajte ponovo.');
                 }
             };
