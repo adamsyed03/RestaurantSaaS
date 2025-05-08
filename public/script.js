@@ -140,16 +140,24 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <p>${item.description}</p>
                                 <div class="price">${formatPrice(item.price)}</div>
                             </div>
-                            <div class="item-actions">
-                                <button onclick="addToCart('${item.id}', '${item.name}', ${item.price})">
-                                    Dodaj u korpu
-                                </button>
+                            <div class="item-quantity">
+                                <button onclick="updateCartItem('${item.id}', -1)">-</button>
+                                <span id="quantity-${item.id}">0</span>
+                                <button onclick="updateCartItem('${item.id}', 1, '${item.name}', ${item.price})">+</button>
                             </div>
                         </div>
                     `).join('')}
                 </div>
             `;
             menuContent.appendChild(categorySection);
+        });
+        
+        // Update quantity displays for items in cart
+        cart.forEach(item => {
+            const quantityElement = document.getElementById(`quantity-${item.id}`);
+            if (quantityElement) {
+                quantityElement.textContent = item.quantity;
+            }
         });
     }
     
@@ -538,6 +546,50 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Cart updated:', updatedCart);
             cart = updatedCart;
             updateCartDisplay();
+        })
+        .catch(error => console.error('Error updating cart:', error));
+    }
+    
+    function updateCartItem(itemId, change, name = '', price = 0) {
+        console.log('Updating cart item:', itemId, change);
+        
+        if (!tableId) {
+            alert('Molimo vas da prvo izaberete sto');
+            return;
+        }
+        
+        // Find current quantity in cart
+        const currentItem = cart.find(item => item.id === itemId);
+        const currentQty = currentItem ? currentItem.quantity : 0;
+        const newQty = currentQty + change;
+        
+        // Don't allow negative quantities
+        if (newQty < 0) return;
+        
+        fetch(`/api/cart/${tableId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                itemId: itemId,
+                name: name,
+                price: price,
+                quantity: change
+            })
+        })
+        .then(response => response.json())
+        .then(updatedCart => {
+            console.log('Cart updated:', updatedCart);
+            cart = updatedCart;
+            updateCartDisplay();
+            
+            // Update quantity display in menu
+            const quantityElement = document.getElementById(`quantity-${itemId}`);
+            if (quantityElement) {
+                const newQuantity = cart.find(item => item.id === itemId)?.quantity || 0;
+                quantityElement.textContent = newQuantity;
+            }
         })
         .catch(error => console.error('Error updating cart:', error));
     }
