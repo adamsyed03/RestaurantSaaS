@@ -513,7 +513,15 @@ document.addEventListener('DOMContentLoaded', function() {
                             <h3>Hvala na porudžbini!</h3>
                             <p>Vaša porudžbina je uspešno primljena.</p>
                         </div>
+                        <button id="return-to-menu" class="btn-primary">Povratak na meni</button>
                     `;
+
+                    // Add return to menu handler
+                    document.getElementById('return-to-menu').onclick = function() {
+                        document.body.removeChild(checkoutOverlay);
+                        cartContainer.classList.add('hidden');
+                        loadMenu(); // Refresh the menu
+                    };
 
                 } catch (error) {
                     console.error('Error:', error);

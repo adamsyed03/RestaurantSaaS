@@ -218,8 +218,6 @@ header {
 
 .cart-header {
     padding: 12px 15px;
-    background: #D4AF37;
-    color: white;
     display: flex;
     align-items: center;
 }

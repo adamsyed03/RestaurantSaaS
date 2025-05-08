@@ -3,19 +3,37 @@ export async function onRequest(context) {
     if (context.request.method === 'POST') {
         try {
             const order = await context.request.json();
-            const key = 'order_' + Date.now();
+            const timestamp = new Date().toISOString();
+            const key = `order_${timestamp}`;
             
-            // Add headers to ensure proper JSON response
-            const headers = {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
+            // Format order data for better readability
+            const formattedOrder = {
+                orderNumber: `#${Date.now().toString().slice(-4)}`,
+                tableNumber: order.table.replace('table', 'Sto '),
+                time: new Date().toLocaleTimeString('sr-RS', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }),
+                items: order.items.map(item => ({
+                    name: item.name,
+                    quantity: item.quantity,
+                    price: `${item.price.toLocaleString()} RSD`
+                })),
+                total: `${order.total.toLocaleString()} RSD`,
+                payment: order.payment === 'cash' ? 'Gotovina' : 'Kartica',
+                notes: order.notes || 'Nema napomena',
+                status: 'Novo',
+                timestamp
             };
 
-            // Save to KV
-            await context.env.CARTS.put(key, JSON.stringify(order));
+            await context.env.CARTS.put(key, JSON.stringify(formattedOrder));
             
-            return new Response(JSON.stringify({ success: true }), { headers });
-            
+            return new Response(JSON.stringify({ success: true }), {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                }
+            });
         } catch (error) {
             return new Response(
                 JSON.stringify({ error: 'Failed to process order' }), 
