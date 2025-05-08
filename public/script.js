@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Script loaded');
+    
     // Elements
     const tableSelection = document.getElementById('table-selection');
     const mainContainer = document.getElementById('main-container');
@@ -47,6 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
     fetch('/api/restaurant-config')
         .then(response => response.json())
         .then(config => {
+            console.log('Restaurant config loaded:', config);
             restaurantName.textContent = config.name;
             restaurantTagline.textContent = config.tagline;
             document.title = config.name + ' - Meni';
@@ -61,6 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
     fetch('/api/menu')
         .then(response => response.json())
         .then(data => {
+            console.log('Menu data loaded:', data);
             menuData = data;
             createCategoryTabs(data);
             displayMenu(data);
@@ -96,57 +100,57 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => console.error('Error loading cart:', error));
     }
     
-    function createCategoryTabs(menuData) {
+    function createCategoryTabs(data) {
+        console.log('Creating category tabs');
+        const categoryTabs = document.getElementById('category-tabs');
         categoryTabs.innerHTML = '';
         
-        menuData.categories.forEach((category, index) => {
+        data.categories.forEach((category, index) => {
             const tab = document.createElement('button');
-            tab.className = 'category-tab';
-            if (index === 0) tab.classList.add('active');
+            tab.className = 'category-tab' + (index === 0 ? ' active' : '');
             tab.textContent = category.name;
-            tab.dataset.category = category.name;
-            
-            tab.addEventListener('click', function() {
-                // Update active tab
-                document.querySelectorAll('.category-tab').forEach(t => {
-                    t.classList.remove('active');
-                });
+            tab.onclick = () => {
+                document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
-                
-                // Scroll to category
-                const categoryElement = document.querySelector(`.category[data-name="${category.name}"]`);
-                if (categoryElement) {
-                    categoryElement.scrollIntoView({ behavior: 'smooth' });
-                }
-            });
-            
+                displayMenu(data, category.name);
+            };
             categoryTabs.appendChild(tab);
         });
     }
     
-    function displayMenu(menuData) {
+    function displayMenu(data, selectedCategory = null) {
+        console.log('Displaying menu', selectedCategory);
+        const menuContent = document.getElementById('menu-content');
         menuContent.innerHTML = '';
         
-        menuData.categories.forEach(category => {
+        const categories = selectedCategory 
+            ? [data.categories.find(c => c.name === selectedCategory)]
+            : data.categories;
+            
+        categories.forEach(category => {
             const categorySection = document.createElement('div');
-            categorySection.className = 'category';
-            categorySection.dataset.name = category.name;
-            
-            const categoryTitle = document.createElement('h3');
-            categoryTitle.className = 'category-name';
-            categoryTitle.textContent = category.name;
-            categorySection.appendChild(categoryTitle);
-            
-            category.items.forEach(item => {
-                const menuItem = createMenuItem(item);
-                categorySection.appendChild(menuItem);
-            });
-            
+            categorySection.className = 'menu-category';
+            categorySection.innerHTML = `
+                <h3>${category.name}</h3>
+                <div class="menu-items">
+                    ${category.items.map(item => `
+                        <div class="menu-item">
+                            <div class="item-info">
+                                <h4>${item.name}</h4>
+                                <p>${item.description}</p>
+                                <div class="price">${formatPrice(item.price)}</div>
+                            </div>
+                            <div class="item-actions">
+                                <button onclick="addToCart('${item.id}', '${item.name}', ${item.price})">
+                                    Dodaj u korpu
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
             menuContent.appendChild(categorySection);
         });
-        
-        // Add scroll event listener to update active tab
-        window.addEventListener('scroll', debounce(updateActiveTabOnScroll, 100));
     }
     
     function createMenuItem(item) {
@@ -311,6 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function updateCartDisplay() {
+        console.log('Updating cart display');
         cartItems.innerHTML = '';
         
         const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -506,5 +511,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
             };
         });
+    }
+    
+    // Add to cart function
+    function addToCart(itemId, name, price) {
+        console.log('Adding to cart:', itemId);
+        if (!tableId) {
+            alert('Molimo vas da prvo izaberete sto');
+            return;
+        }
+        
+        fetch(`/api/cart/${tableId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                itemId: itemId,
+                name: name,
+                price: price,
+                quantity: 1
+            })
+        })
+        .then(response => response.json())
+        .then(updatedCart => {
+            console.log('Cart updated:', updatedCart);
+            cart = updatedCart;
+            updateCartDisplay();
+        })
+        .catch(error => console.error('Error updating cart:', error));
     }
 });
